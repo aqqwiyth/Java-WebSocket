@@ -3,8 +3,6 @@ package org.java_websocket;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
-import java.nio.channels.spi.AbstractSelectableChannel;
-
 import org.java_websocket.WebSocket.Role;
 
 public class SocketChannelIOHelper {
@@ -61,11 +59,12 @@ public class SocketChannelIOHelper {
 			} while ( buffer != null );
 		}
 
-		if( ws.outQueue.isEmpty() && ws.isFlushAndClose() && ws.getDraft().getRole() == Role.SERVER ) {//
+		if( ws.outQueue.isEmpty() && ws.isFlushAndClose() && (
+                /**非ws协议请求该端口(http/telnet)会导致整个WebSocket服务挂掉**/ws.getDraft()==null || ws.getDraft().getRole() == Role.SERVER) ) {
 			synchronized ( ws ) {
 				ws.closeConnection();
 			}
 		}
-		return c != null ? !( (WrappedByteChannel) sockchannel ).isNeedWrite() : true;
+		return c == null || !((WrappedByteChannel) sockchannel).isNeedWrite();
 	}
 }
